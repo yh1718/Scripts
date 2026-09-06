@@ -21,8 +21,8 @@ Scripts/
 ### 1. NodeSeek 论坛自动化签到 (Loon 现代版)
 
 #### 特性
-- **标准 Loon API**：使用官方 `$httpClient`, `$persistentStore`, `$notification`, `$argument`, `$done`，杜绝旧版兼容层与内存泄漏。
-- **抓取开关防骚扰**：默认关闭 Cookie 拦截，仅在获取凭证时手动临时开启，成功后关闭。
+- **标准 Loon API**：严格基于 Loon 官方现代 API（`$httpClient`, `$persistentStore`, `$notification`, `$argument`, `$done`），运行轻量稳定。
+- **抓取开关防骚扰**：默认关闭 Cookie 拦截，仅在获取凭证时在插件设置中临时开启，用完即关。
 - **防风控拟人随机延迟**：每日 `00:05` 定时触发后，随机休眠 1~30 秒发起请求，抹除整点高并发特征。
 - **Cloudflare 五秒盾识别**：遇到 HTML 盾质询返回清晰友好的交互告警，避免乱码刷屏。
 - **固定 / 随机鸡腿**：支持自由配置固定 5 鸡腿保底或 1~10 鸡腿搏运。
@@ -36,18 +36,24 @@ Scripts/
 
 ---
 
-## 🔒 私有仓库（Private）使用指南
+## 🚀 Loon 远程订阅安装指南
 
-本仓库为私有仓库，在代理客户端中使用时推荐以下两种方式之一：
+本仓库现为**公开仓库（Public）**，无需任何 Token 配置，复制以下链接即可直接在 Loon 中安装与订阅：
 
-### 方式一：本地文件导入（最推荐、无需 Token）
-1. 在 iOS 设备的「文件」App 中，打开 Loon 目录（`我的 iPhone / Loon / Plugins` 或 `Scripts`）。
-2. 将 `NodeSeek.plugin` 与 `NodeSeek_Loon.js` 放置到对应目录。
-3. 在 Loon 的「插件」页面中点击右上角添加，选择「本地插件」即可。
+### 插件订阅链接
+```text
+https://raw.githubusercontent.com/yh1718/Scripts/main/NodeSeek.plugin
+```
+*(备用加速链接，适合国内网络环境)*：
+```text
+https://fastly.jsdelivr.net/gh/yh1718/Scripts@main/NodeSeek.plugin
+```
 
-### 方式二：远程私有链接（通过 GitHub Personal Access Token）
-1. 在 GitHub 生成带有 `repo` 权限的 Personal Access Token（PAT）。
-2. 在 Loon 的订阅链接或请求头中携带 Token：
-   ```text
-   https://raw.githubusercontent.com/yh1718/Scripts/main/NodeSeek.plugin?token=YOUR_TOKEN
-   ```
+### 使用步骤
+1. **添加插件**：打开 Loon -> **配置** -> **插件** -> 点击右上角加号 -> 粘贴上述订阅链接 -> 保存。
+2. **首次获取凭证**：
+   - 在已安装的插件列表中点击进入，将 **「Cookie 捕获开关」** 开启。
+   - 打开 Safari 浏览器，登录 NodeSeek 并访问个人主页（例如点击头像进入主页）。
+   - 收到 Loon 弹出的 **「NodeSeek 凭证获取成功」** 通知。
+   - 回到 Loon 插件设置，将 **「Cookie 捕获开关」** 关闭（防日常重复触发）。
+3. **享受自动签到**：每天凌晨 `00:05` 自动带随机延迟静默签到并推送结果通知。
