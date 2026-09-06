@@ -42,19 +42,25 @@ const NEED_KEYS = Object.keys(DEFAULT_HEADERS);
  */
 function getArgs() {
   const args = {
-    capture: false,   // 是否开启抓取请求头开关
+    capture: true,    // 默认开启抓取，避免 Loon 未传递 $argument 时被误杀
     fixed: false,     // 是否开启固定5鸡腿 (false=随机1~10鸡腿, true=固定5鸡腿)
     delay: 20         // 最大随机休眠延迟（秒），0 表示不延迟
   };
 
-  if (typeof $argument !== "undefined" && $argument) {
-    const pairs = $argument.split("&");
+  const rawArg = (typeof $argument !== "undefined" && $argument) ? String($argument).trim() : "";
+  log(`当前插件参数 $argument: "${rawArg}"`);
+
+  if (rawArg) {
+    const pairs = rawArg.split("&");
     for (let i = 0; i < pairs.length; i++) {
       const kv = pairs[i].split("=");
       if (kv.length === 2) {
         const k = kv[0].trim().toLowerCase();
-        const v = kv[1].trim().toLowerCase();
-        if (k === "capture") args.capture = (v === "true" || v === "1" || v === "on");
+        const v = kv[1].trim().toLowerCase().replace(/['"]/g, "");
+        if (k === "capture") {
+          // 只有明确写了 false / 0 / off 时才关闭；如果写了 {capture} 占位符或 true 则保持开启
+          args.capture = !(v === "false" || v === "0" || v === "off");
+        }
         if (k === "fixed") args.fixed = (v === "true" || v === "1" || v === "on");
         if (k === "delay") args.delay = Math.max(0, parseInt(v, 10) || 0);
       }
@@ -83,12 +89,9 @@ function captureHeaders() {
   const args = getArgs();
   const rawHeaders = $persistentStore.read(KEY_HEADERS);
 
-  // 抓取开关控制，避免平时正常刷论坛时频繁弹窗
-  if (!args.capture) {
-    log("Cookie 捕获开关已关闭 (capture=false)。");
-    if (!rawHeaders) {
-      notify("检测到个人主页请求", "请在 Loon 插件配置中开启「Cookie 捕获开关」，然后重新刷新主页。");
-    }
+  // 仅在已有旧凭证且用户明确关闭捕获时跳过
+  if (!args.capture && rawHeaders) {
+    log("Cookie 捕获开关已手动关闭，跳过检查。");
     $done({});
     return;
   }
@@ -111,17 +114,31 @@ function captureHeaders() {
 
   if (!picked["Cookie"] || Object.keys(picked).length < 2) {
     log(`捕获请求头不足: ${JSON.stringify(picked)}`);
-    notify("Cookie 捕获失败", "未检测到有效的 Cookie 与鉴权参数，请刷新重试。");
     $done({});
     return;
   }
 
+  // 智能去重机制：如果与已保存的 Cookie 一模一样，静默放行，避免频繁弹窗
+  if (rawHeaders) {
+    try {
+      const oldObj = JSON.parse(rawHeaders);
+      if (oldObj && oldObj["Cookie"] === picked["Cookie"]) {
+        log("检测到 Cookie 未发生变更，静默保持，无需重复提醒。");
+        $done({});
+        return;
+      }
+    } catch (e) {
+      log(`解析旧 Header 失败: ${e.message}`);
+    }
+  }
+
+  // 首次获取或 Cookie 发生变化时，保存并弹窗
   const ok = $persistentStore.write(JSON.stringify(picked), KEY_HEADERS);
   $persistentStore.write(new Date().toISOString(), KEY_TIME);
 
   if (ok) {
     log(`成功捕获并保存 ${Object.keys(picked).length} 个请求头字段。`);
-    notify("🎉 Cookie 获取成功", "鉴权头与 Cookie 已持久化保存，请在 Loon 插件中将「Cookie 捕获开关」关闭。");
+    notify("🎉 Cookie 获取成功", "NodeSeek 登录凭证与验签头已持久化保存，签到任务将自动运行！");
   } else {
     notify("Cookie 保存失败", "持久化写入失败，请检查 Loon 存储权限。");
   }

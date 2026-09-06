@@ -6,9 +6,10 @@
 #!date = 2026-09-07
 
 [Argument]
-capture = switch, false, tag = Cookie 捕获开关, desc = 开启后使用 Safari 访问论坛个人主页获取凭证；获取成功后请关闭此开关
+capture = switch, true, tag = Cookie 捕获开关, desc = 自动获取登录凭证（内置智能去重免打扰）；关闭则彻底停止捕获
 fixed = switch, false, tag = 固定保底 5 鸡腿, desc = 关闭为搏运随机(1~10鸡腿)，开启为稳定保底(固定5鸡腿)
 delay = input, "30", tag = 防风控延迟上限(秒), desc = 触发签到前随机等待 1~N 秒，消除整点并发特征防封号
+
 
 [Script]
 # 阶段一：访问个人主页时拦截请求头（放宽正则，适配各类浏览器请求）
