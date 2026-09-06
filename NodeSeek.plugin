@@ -11,11 +11,12 @@ fixed = switch, false, tag = 固定保底 5 鸡腿, desc = 关闭为搏运随机
 delay = input, "30", tag = 防风控延迟上限(秒), desc = 触发签到前随机等待 1~N 秒，消除整点并发特征防封号
 
 [Script]
-# 阶段一：访问个人主页时拦截请求头
-http-request ^https:\/\/www\.nodeseek\.com\/api\/account\/getInfo\/\d+\?readme=1 script-path = NodeSeek_Loon.js, tag = NodeSeek 凭证捕获, argument = "capture={capture}&fixed={fixed}&delay={delay}"
+# 阶段一：访问个人主页时拦截请求头（放宽正则，适配各类浏览器请求）
+http-request ^https:\/\/www\.nodeseek\.com\/api\/account\/getInfo script-path = https://raw.githubusercontent.com/yh1718/Scripts/main/NodeSeek_Loon.js, tag = NodeSeek 凭证捕获, argument = "capture={capture}&fixed={fixed}&delay={delay}"
 
 # 阶段二：每日定时签到（建议 00:05 执行，搭配 1~30 秒随机拟人延迟）
-cron "5 0 * * *" script-path = NodeSeek_Loon.js, tag = NodeSeek 每日签到, timeout = 60, argument = "capture={capture}&fixed={fixed}&delay={delay}"
+cron "5 0 * * *" script-path = https://raw.githubusercontent.com/yh1718/Scripts/main/NodeSeek_Loon.js, tag = NodeSeek 每日签到, timeout = 60, argument = "capture={capture}&fixed={fixed}&delay={delay}"
 
 [MITM]
 hostname = www.nodeseek.com
+

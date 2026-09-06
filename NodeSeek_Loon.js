@@ -81,9 +81,14 @@ function sleep(ms) {
  */
 function captureHeaders() {
   const args = getArgs();
+  const rawHeaders = $persistentStore.read(KEY_HEADERS);
+
   // 抓取开关控制，避免平时正常刷论坛时频繁弹窗
   if (!args.capture) {
-    log("Cookie 捕获开关已关闭 (capture=false)，跳过拦截。");
+    log("Cookie 捕获开关已关闭 (capture=false)。");
+    if (!rawHeaders) {
+      notify("检测到个人主页请求", "请在 Loon 插件配置中开启「Cookie 捕获开关」，然后重新刷新主页。");
+    }
     $done({});
     return;
   }
@@ -99,8 +104,14 @@ function captureHeaders() {
     }
   }
 
-  if (!picked["Cookie"] || Object.keys(picked).length < 3) {
-    notify("Cookie 捕获失败", "未检测到有效的 Cookie 与鉴权参数，请重试。");
+  // 深度兼容 HTTP/2 小写请求头
+  if (!picked["Cookie"] && (reqHeaders["cookie"] || reqHeaders["COOKIE"])) {
+    picked["Cookie"] = reqHeaders["cookie"] || reqHeaders["COOKIE"];
+  }
+
+  if (!picked["Cookie"] || Object.keys(picked).length < 2) {
+    log(`捕获请求头不足: ${JSON.stringify(picked)}`);
+    notify("Cookie 捕获失败", "未检测到有效的 Cookie 与鉴权参数，请刷新重试。");
     $done({});
     return;
   }
@@ -110,7 +121,7 @@ function captureHeaders() {
 
   if (ok) {
     log(`成功捕获并保存 ${Object.keys(picked).length} 个请求头字段。`);
-    notify("Cookie 获取成功", "鉴权头已保存，请在 Loon 插件中将 capture 关闭。");
+    notify("🎉 Cookie 获取成功", "鉴权头与 Cookie 已持久化保存，请在 Loon 插件中将「Cookie 捕获开关」关闭。");
   } else {
     notify("Cookie 保存失败", "持久化写入失败，请检查 Loon 存储权限。");
   }
