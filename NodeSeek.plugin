@@ -1,0 +1,21 @@
+#!name = NodeSeek 论坛签到
+#!desc = 自动获取 NodeSeek 登录凭证与验签头，每日定时自动签到。支持固定/随机鸡腿切换、防风控随机延迟与 Cloudflare 拦截告警。
+#!author = Curtinp118, Nullwhy, 怎么肥事
+#!tag = 签到, 论坛
+#!system = iOS, iPadOS, macOS
+#!date = 2026-09-07
+
+[Argument]
+capture = switch, false, tag = Cookie 捕获开关, desc = 开启后使用 Safari 访问论坛个人主页获取凭证；获取成功后请关闭此开关
+fixed = switch, false, tag = 固定保底 5 鸡腿, desc = 关闭为搏运随机(1~10鸡腿)，开启为稳定保底(固定5鸡腿)
+delay = input, "30", tag = 防风控延迟上限(秒), desc = 触发签到前随机等待 1~N 秒，消除整点并发特征防封号
+
+[Script]
+# 阶段一：访问个人主页时拦截请求头
+http-request ^https:\/\/www\.nodeseek\.com\/api\/account\/getInfo\/\d+\?readme=1 script-path = NodeSeek_Loon.js, tag = NodeSeek 凭证捕获, argument = "capture={capture}&fixed={fixed}&delay={delay}"
+
+# 阶段二：每日定时签到（建议 00:05 执行，搭配 1~30 秒随机拟人延迟）
+cron "5 0 * * *" script-path = NodeSeek_Loon.js, tag = NodeSeek 每日签到, timeout = 60, argument = "capture={capture}&fixed={fixed}&delay={delay}"
+
+[MITM]
+hostname = www.nodeseek.com
